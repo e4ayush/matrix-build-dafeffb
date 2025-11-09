@@ -1,0 +1,52 @@
+name: Matrix Build with Artifacts - dafeffb
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node: [14, 16, 18]  # 3 parallel jobs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: matrix-dafeffb
+        run: |
+          echo "Running matrix job for Node ${{ matrix.node }}"
+          mkdir -p build-output
+          cat <<EOF > build-output/metadata.json
+{
+  "variant": "node-${{ matrix.node }}",
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "message": "Build artifact for Node ${{ matrix.node }}",
+  "txn": "dafeffb"
+}
+EOF
+          echo "Build output for Node ${{ matrix.node }}" > build-output/output.txt
+
+      - name: Show artifact preview
+        run: |
+          echo "Listing build-output:"
+          ls -la build-output
+          echo "metadata.json preview:"
+          sed -n '1,20p' build-output/metadata.json
+
+      - name: Upload artifact - build-dafeffb-node${{ matrix.node }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-dafeffb-node${{ matrix.node }}
+          path: build-output/
+          retention-days: 7
